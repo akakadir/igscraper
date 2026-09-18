@@ -139,8 +139,8 @@ def parse_html(path, username):
     }
 
 
-@app.get("/api/bio")
-def bio():
+@app.get("/api/scraper")
+def scraper():
     path = None
 
     try:
