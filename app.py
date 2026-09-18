@@ -3,12 +3,12 @@ import re
 import time
 from pathlib import Path
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import httpx
 
 app = Flask(__name__)
+app.json.ensure_ascii = False
 
-USERNAME = "kadirsakgz"
 
 BROWSER_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -139,20 +139,52 @@ def parse_html(path, username):
     }
 
 
+@app.get("/")
+def home():
+    return jsonify({
+        "status": "ok",
+        "service": "igscraper"
+    })
+
+
 @app.get("/api/scraper")
 def scraper():
-    path = None
+    usernames = request.args.getlist("username")
 
-    try:
-        path = fetch_html(USERNAME)
-        profile = parse_html(path, USERNAME)
-        return jsonify(profile)
+    cleaned_usernames = []
 
-    except Exception as e:
+    for value in usernames:
+        for username in value.split(","):
+            username = username.strip().lstrip("@")
+
+            if username and username not in cleaned_usernames:
+                cleaned_usernames.append(username)
+
+    if not cleaned_usernames:
         return jsonify({
-            "error": str(e)
-        }), 500
+            "error": "username parametresi gerekli."
+        }), 400
 
-    finally:
-        if path is not None and path.exists():
-            path.unlink()
+    results = []
+
+    for username in cleaned_usernames:
+        path = None
+
+        try:
+            path = fetch_html(username)
+            profile = parse_html(path, username)
+            results.append(profile)
+
+        except Exception as e:
+            results.append({
+                "username": username,
+                "error": str(e)
+            })
+
+        finally:
+            if path is not None and path.exists():
+                path.unlink()
+
+    return jsonify({
+        "users": results
+    })
