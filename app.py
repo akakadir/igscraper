@@ -9,11 +9,6 @@ import httpx
 app = Flask(__name__)
 app.json.ensure_ascii = False
 
-@app.after_request
-def add_cors(response):
-    response.headers["Access-Control-Allow-Origin"] = "https://akakadir.art"
-    response.headers["Vary"] = "Origin"
-    return response
 
 BROWSER_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -31,6 +26,14 @@ CRAWLER_HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "tr-TR,tr;q=0.9,en;q=0.8",
 }
+
+
+def add_cors(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    return response
+
+
+app.after_request(add_cors)
 
 
 def get_httpx(url, headers):
